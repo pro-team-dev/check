@@ -22,7 +22,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     'goal',
+    'channels',
     "corsheaders",
     'rest_framework',
     'rest_framework.authtoken',
@@ -33,7 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
+    
+    
 ]
 
 CHANNEL_LAYERS = {

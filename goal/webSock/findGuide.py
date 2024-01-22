@@ -24,20 +24,22 @@ class GuideRequestConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        # Handle incoming WebSocket messages
-        data = json.loads(text_data)
+        # This method is called when the server receives a message from the WebSocket.
+        text_data_json = json.loads(text_data)
+        message_type = text_data_json.get('type', '')
 
-        # Implement logic to send requests to guides based on the location
-        # You may retrieve guides from the database and send requests to them
+        if message_type == 'send_tour_details':
+            # Handle the 'send_tour_details' message type
+            tour_data = text_data_json.get('tour_data', {})
+            # Perform any necessary processing or broadcasting here
+            await self.send_tour_details(tour_data)
+        else:
+            print(f"Unhandled message type: {message_type}")
 
-        # Broadcast the message to all consumers in the group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'guide.request',
-                'message': 'Guide request sent',
-            }
-        )
+    async def send_tour_details(self, tour_data):
+        # Handle the 'send_tour_details' message type
+        # Perform any necessary processing or broadcasting here
+        await self.send(text_data=json.dumps({'type': 'tour_details_received', 'message': 'Tour details received'}))
 
     async def guide_request(self, event):
         # Send message to WebSocket
