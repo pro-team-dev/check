@@ -130,21 +130,22 @@ class cancelTour(APIView):
             if tour.guide == user or tour.tourist == user:
                 tour.status = 'cancelled'
                 tour.save()
-                channel_layer = get_channel_layer()
-                async_to_sync(channel_layer.group_send)(
-                        f'tour_{tour.tourist}',  # Group name for guides
-                        {
-                            'type': 'update',
-                            'tour_data': {
-                                'tour_id': tour.tour_id,
-                                'location': tour.location,
-                                'status': tour.status,
-                                'tourist_id': tour.tourist.id,
-                                'guide_id': tour.guide.id,
-                                
+                if tour.tourist == user:
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                            f'tour_{tour.tourist}',  # Group name for guides
+                            {
+                                'type': 'update',
+                                'tour_data': {
+                                    'tour_id': tour.tour_id,
+                                    'location': tour.location,
+                                    'status': tour.status,
+                                    'tourist_id': tour.tourist.id,
+                                    'guide_id': tour.guide.id,
+                                    
+                                },
                             },
-                        },
-                    )
+                        )
                 return Response({'status': 'success'}, status=status.HTTP_200_OK)
             else:
                  return Response({'status': 'error', 'message': 'No tour found'}, status=status.HTTP_404_NOT_FOUND)
