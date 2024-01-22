@@ -35,7 +35,7 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = ['name']
 
     def __str__(self):
-        return self.email
+        return str(self.id)
 
     def has_perm(self, perm, obj=None):
         return self.is_admin
@@ -75,3 +75,6 @@ class Tour(models.Model):
             tourist=tourist,
         )
         return tour.tour_id
+    
+    def __str__(self):
+        return str(self.tour_id)
