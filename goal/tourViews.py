@@ -48,17 +48,63 @@ class SubmitTourDetailsView(APIView):
     
 class AcceptTourOfferView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         try:
+            user = request.user
             # Assuming you have a tour ID in the request data
             tour_id = request.data.get('tour_id')
             
             # Update the status of the tour to 'ongoing' when accepted
             tour = Tour.objects.get(tour_id=tour_id)
+            tour.guide=user
             tour.status = 'ongoing'
             tour.save()
 
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        except Tour.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class TourComplete(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        try:
+            user = request.user
+            if user.is_guide != True:
+                return Response({'status': 'error', 'message': 'Tour Must be completed from Guide Side'}, status=status.HTTP_404_NOT_FOUND)
+            # Assuming you have a tour ID in the request data
+            tour_id = request.data.get('tour_id')
+            
+            # Update the status of the tour to 'ongoing' when accepted
+            tour = Tour.objects.get(tour_id=tour_id)
+            tour.status = 'completed'
+            tour.save()
+
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        except Tour.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class cancelTour(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        try:
+            user = request.user
+            tour_id = request.data.get('tour_id')
+            tour = Tour.objects.get(tour_id=tour_id)
+            print(tour.guide,tour.tourist,user)
+            if tour.guide == user or tour.tourist == user:
+                tour.status = 'cancelled'
+                tour.save()
+                return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            else:
+                 return Response({'status': 'error', 'message': 'No tour found'}, status=status.HTTP_404_NOT_FOUND)
+
+            
         except Tour.DoesNotExist:
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
