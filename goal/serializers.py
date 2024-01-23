@@ -4,17 +4,22 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from goal.utils import Util
+from .models import User
+from rest_framework.validators import UniqueValidator
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={'input_type':'password'}, write_only=True)
     is_guide = serializers.BooleanField(default=False, write_only=True)
     profile = serializers.CharField(allow_blank=True, allow_null=True)
-    username = serializers.CharField(max_length=200)
+    username = serializers.CharField(max_length=200,validators=[UniqueValidator(queryset=User.objects.all())])
     citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True)
+    languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False)
+    phone_number = serializers.CharField(max_length=15, allow_blank=True, allow_null=True)
+    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['email', 'name', 'password', 'is_guide', 'profile', 'username', 'citizenship']
+        fields = ['email', 'name', 'password', 'is_guide', 'profile', 'username', 'citizenship', 'languages', 'phone_number', 'hourly_rate']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -22,8 +27,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         profile = validated_data.pop('profile', '')
         username = validated_data.pop('username', '')
         citizenship = validated_data.pop('citizenship', '')
+        languages = validated_data.pop('languages', [])
+        phone_number = validated_data.pop('phone_number', '')
+        hourly_rate = validated_data.pop('hourly_rate', None)
+
         user = User.objects.create_user(**validated_data, is_guide=is_guide, profile=profile, username=username, citizenship=citizenship)
+        user.languages = languages
+        user.phone_number = phone_number
+        user.hourly_rate = hourly_rate
         user.save()
+
         return user
 
 

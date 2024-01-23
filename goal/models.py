@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+import json
 
 class CustomUserManager(BaseUserManager):
 
@@ -32,6 +33,9 @@ class User(AbstractBaseUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    languages_json = models.TextField(null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
@@ -45,6 +49,14 @@ class User(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return True
+
+    @property
+    def languages(self):
+        return json.loads(self.languages_json) if self.languages_json else []
+
+    @languages.setter
+    def languages(self, value):
+        self.languages_json = json.dumps(value)
 
     @property
     def is_staff(self):
