@@ -8,16 +8,21 @@ from goal.utils import Util
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={'input_type':'password'}, write_only=True)
     is_guide = serializers.BooleanField(default=False, write_only=True)
+    profile = serializers.CharField(allow_blank=True, allow_null=True)
+    username = serializers.CharField(max_length=200)
+    citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['email', 'name', 'password', 'is_guide']
+        fields = ['email', 'name', 'password', 'is_guide', 'profile', 'username', 'citizenship']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         is_guide = validated_data.pop('is_guide', False)
-        user = User.objects.create_user(**validated_data)
-        user.is_guide = is_guide
+        profile = validated_data.pop('profile', '')
+        username = validated_data.pop('username', '')
+        citizenship = validated_data.pop('citizenship', '')
+        user = User.objects.create_user(**validated_data, is_guide=is_guide, profile=profile, username=username, citizenship=citizenship)
         user.save()
         return user
 
@@ -32,7 +37,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'name']
+        fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship']
 
 class UserChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)

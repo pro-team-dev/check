@@ -22,6 +22,9 @@ class User(AbstractBaseUser):
         unique=True,
     )
     name = models.CharField(max_length=200)
+    username = models.CharField(max_length=200, unique=True)
+    profile = models.TextField(null=True, blank=True)  # Base64-encoded profile image
+    citizenship = models.CharField(max_length=200, null=True, blank=True)
     id = models.AutoField(primary_key=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
@@ -32,7 +35,7 @@ class User(AbstractBaseUser):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    REQUIRED_FIELDS = ['name', 'username']
 
     def __str__(self):
         return str(self.id)
@@ -46,6 +49,13 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         return self.is_admin
+
+    def save_base64_profile_image(self, base64_encoded_image):
+        self.profile = base64_encoded_image
+        self.save()
+
+    def get_base64_profile_image(self):
+        return self.profile
     
     
 class Tour(models.Model):

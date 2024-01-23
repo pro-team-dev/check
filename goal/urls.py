@@ -2,6 +2,8 @@ from django.urls import path
 from goal.views import SendPasswordResetEmailView, UserChangePasswordView, UserLoginView, UserProfileView, UserRegistrationView, UserPasswordResetView
 from goal.tourViews import SubmitTourDetailsView,AcceptTourOfferView,TourComplete,cancelTour
 from goal.webSock.findGuide import GuideRequestConsumer,TouristConnection,GuideConnection
+from goal.webSock.utils import UsernameCheckConsumer
+
 urlpatterns = [
     path('register/', UserRegistrationView.as_view(), name='register'),
     path('login/', UserLoginView.as_view(), name='login'),
@@ -15,12 +17,15 @@ urlpatterns = [
     path('complete-tour/', TourComplete.as_view(), name='TourComplete'),
     path('cancel-tour/', cancelTour.as_view(), name='cancelTour'),
 
+
 ]
 
 websocket_url=[
     path("ws/guide_requests/<str:location>", GuideRequestConsumer.as_asgi()),
     path("ws/tourist-tour/<str:user>", TouristConnection.as_asgi()),
     path("ws/guide-tour/<str:user>", GuideConnection.as_asgi()),
+    path('ws/check-username/',  UsernameCheckConsumer.as_asgi()),
+
 
 
 ]

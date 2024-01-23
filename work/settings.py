@@ -17,7 +17,7 @@ SECRET_KEY = 'django-insecure-yh6w@xs0zb=a*0qd*%iysz%qnqd^hy=@k2g#3fkw=7=m1w2^=(
 DEBUG = True
 
 
-ALLOWED_HOSTS = ["api.logalg.biz",".localg.biz"]
+ALLOWED_HOSTS = ["api.logalg.biz",".localg.biz","localhost","127.0.0.1"]
 
 
 
