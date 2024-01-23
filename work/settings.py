@@ -16,7 +16,9 @@ SECRET_KEY = 'django-insecure-yh6w@xs0zb=a*0qd*%iysz%qnqd^hy=@k2g#3fkw=7=m1w2^=(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["api.localg.biz"]
+
+ALLOWED_HOSTS = ["api.logalg.biz",".localg.biz"]
+
 
 
 # Application definition
@@ -155,7 +157,14 @@ CORS_ALLOWED_ORIGINS = [
   
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://www.localg.biz",
+    "https://api.localg.biz",
+    "http://api.localg.biz",
 ]
+# settings.py
+
+CORS_ALLOWED_ORIGIN_REGEX = r"^https://(\w+\.)?localg\.biz$"
+
 
 EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
@@ -180,4 +189,7 @@ SIMPLE_JWT = {
 
     "JTI_CLAIM": "jti",
 
-}
+    
+    }
+
+CSRF_TRUSTED_ORIGINS = ['https://api.localg.biz']
