@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "daphne",
     'goal',
     'channels',
+    'travelagency',
     "corsheaders",
     'rest_framework',
     'rest_framework.authtoken',
@@ -164,7 +165,7 @@ CORS_ALLOWED_ORIGINS = [
 # settings.py
 
 CORS_ALLOWED_ORIGIN_REGEX = r"^https://(\w+\.)?localg\.biz$"
-
+CSRF_TRUSTED_ORIGINS = [ "http://localhost:8000"]
 
 EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
