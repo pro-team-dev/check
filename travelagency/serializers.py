@@ -5,5 +5,5 @@ class TravelAgencySerializer(serializers.ModelSerializer):
     call = serializers.StringRelatedField(many=True)
     class Meta:
         model = TravelAgency
-        fields = ['name','address','price','call']
+        fields = ['name','address','no_of_trips','journey_details', 'duration', 'price','call']
         
