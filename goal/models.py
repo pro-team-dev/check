@@ -32,10 +32,11 @@ class User(AbstractBaseUser):
     is_guide = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    phone_number = models.CharField(max_length=30, null=True, blank=True)
     languages_json = models.TextField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    location = models.TextField(null=True, blank=True)
     objects = CustomUserManager()
     ongoing_tour = models.ForeignKey(
         'Tour',
@@ -44,6 +45,7 @@ class User(AbstractBaseUser):
         null=True,
         blank=True
     )
+    tours = models.ManyToManyField('Tour', related_name='tours', blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'username']
 
@@ -75,6 +77,15 @@ class User(AbstractBaseUser):
     def get_base64_profile_image(self):
         return self.profile
     
+    @classmethod
+    def get_available_guides(cls, language=None, location=None):
+        # Get all users with is_guide=True
+        guides = cls.objects.filter(is_guide=True,location=location.lower(),ongoing_tour__isnull=True)
+
+        guide_ids = list(guides.values_list('id', flat=True))
+
+        return guide_ids
+    
     
 class Tour(models.Model):
     TOUR_STATUS_CHOICES = [
@@ -98,7 +109,8 @@ class Tour(models.Model):
     personal_request = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    offer = models.ManyToManyField('Offer', related_name='tour_offers')
+    
     @classmethod
     def save_tour_details(cls, locations,location, status, tourist, price=None, duration=None, no_of_people=None, travel_coverage=False, food_coverage=False, personal_request=None):
         tour = cls.objects.create(
@@ -118,3 +130,14 @@ class Tour(models.Model):
 
     def __str__(self):
         return f"Tour {self.tour_id} - {self.locations}"
+    
+class Offer(models.Model):
+    id = models.AutoField(primary_key=True)
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='offers')
+    guide = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_offers')
+    tourist = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_offers')
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    duration = models.DurationField(null=True)
+
+    def __str__(self):
+        return f"Offer {self.id} - Tour {self.tour_id} - Guide {self.guide_id} - Tourist {self.tourist_id}"

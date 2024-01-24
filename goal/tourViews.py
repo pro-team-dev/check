@@ -1,12 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from goal.serializers import UserRegistrationSerializer
+from goal.serializers import UserRegistrationSerializer,OfferSerializer,TourSerializer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync,sync_to_async
 import json
 from rest_framework.permissions import IsAuthenticated
-from goal.models import Tour,User
+from goal.models import Tour,User,Offer
 from django.shortcuts import get_object_or_404
 from datetime import timedelta
 
@@ -22,25 +22,28 @@ class SubmitTourDetailsView(APIView):
             if user.is_guide:
                 return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
             tour_data = request.data
-            preferred_activity = request.data.get('preferred_activity')  # Assuming you have a field for preferred activity
-            tour_data['preferred_activity'] = preferred_activity
+            guides=user.get_available_guides(location=tour_data["location"],language=tour_data["language"])
+            tour_data.pop("language")
             tour_id = Tour.save_tour_details(
                 status='pending',  
                 tourist=user,
                 **tour_data
             )
-
+            
             channel_layer = get_channel_layer()
             tour_data["id"]=tour_id
-            async_to_sync(channel_layer.group_send)(
-                f'guide_{tour_data["location"]}',  # Group name for guides
-                {
-                    'type': 'send_tour_details',
-                    'tour_data': tour_data,
-                    'tourist':user.id
-                },
-            )
-        
+            for guide in guides:
+                async_to_sync(channel_layer.group_send)(
+                    f'tour_{guide}',  # Group name for guides
+                    {
+                        'type': 'new_tour',
+                        'tour_data': tour_data,
+                        'tourist':user.id
+                    },
+                )
+                guide=User.objects.get(id=guide)
+                guide.tours.add(tour_id)
+                user.tours.add(tour_id)
             return Response({'status': 'success',
                             "tour_id":tour_id}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -68,6 +71,14 @@ class AcceptTourOfferViewGuide(APIView):
             # Assuming you have a tour ID in the request data
             time_duation= request.data.get('time_duration')
             # Update the status of the tour to 'ongoing' when accepted
+            offer = Offer.objects.create(
+                tour=tour,
+                guide=user,
+                tourist=tour.tourist,
+                price=price,
+                duration=time_duation
+            )
+            offer.save()
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                     f'tour_{tour.tourist}',  # Group name for guides
@@ -75,14 +86,15 @@ class AcceptTourOfferViewGuide(APIView):
                         'type': 'update',
                         'tour_data': {
                             'tour_id': tour.tour_id,
-                            'time_duration':time_duation,
-                            'price':price,
-                            'tourist_id': tour.tourist.id,
-                            'guide_id': user.id
+                            'offer_id':offer.id,
+                            'guide_id': offer.guide.id,
+                            'price': str(offer.price), 
+                            'duration':time_duation
                         },
                     },
                 )
-
+            tour.offer.add(offer)
+            user.tours.add(tour)
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except Tour.DoesNotExist:
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -94,6 +106,7 @@ class AcceptTourOfferViewTourist(APIView):
     def post(self, request):
         try:
             user = request.user
+            Offer_id=request.data.get("offer_id")
             tour_id = request.data.get('tour_id')
             tour = Tour.objects.get(tour_id=tour_id)
             tour.price=request.data.get('price')
@@ -220,3 +233,66 @@ class cancelTour(APIView):
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+class GetAllOffers(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            tour_id = request.data.get("tour_id")
+            tour = get_object_or_404(Tour, tour_id=tour_id)
+            
+
+            offers = tour.offers.all()
+            serializer = OfferSerializer(offers, many=True)
+
+            return Response({'status': 'success', 'offers': serializer.data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class PendingTourUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        tours = user.tours.filter(status="pending")
+        serializer = TourSerializer(tours, many=True)
+        if user.is_guide == False:
+            return Response({'status': 'success', 'pending_tours': serializer.data}, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+                'accepted': [],
+                'not-accepted': []
+            }
+            for tour_data in serializer.data:
+                print(tour_data['tour_id'],"\n\n\n")
+                tour = Tour.objects.get(tour_id=tour_data['tour_id'])
+                offers = tour.offers.all()  
+                print(offers)
+                if offers:
+                    for offer in offers:
+                        if offer.guide == user:
+                            response_data['accepted'].append(tour_data)
+                else:
+                    response_data['not-accepted'].append(tour_data)
+
+            return Response({'status': 'success', 'pending_tours': response_data}, status=status.HTTP_200_OK)
+
+    
+
+
+
+class TourDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, tour_id, *args, **kwargs):
+        tour = get_object_or_404(Tour, tour_id=tour_id)
+        serializer = TourSerializer(tour)
+        return Response({'status': 'success', 'tour': serializer.data}, status=status.HTTP_200_OK)
+
+        
