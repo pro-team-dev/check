@@ -22,6 +22,8 @@ class SubmitTourDetailsView(APIView):
             if user.is_guide:
                 return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
             tour_data = request.data
+            preferred_activity = request.data.get('preferred_activity')  # Assuming you have a field for preferred activity
+            tour_data['preferred_activity'] = preferred_activity
             tour_id = Tour.save_tour_details(
                 status='pending',  
                 tourist=user,
