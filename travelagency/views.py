@@ -23,6 +23,28 @@ class GetTours(APIView):
         tours = Tour.objects.all()
         serializer = TourSerializer(tours, many=True)
         return Response(serializer.data)
+    serializer_class = TourSerializer
+
+    def get_queryset(self):
+        # Retrieve the type of tour and agency name from the query parameters
+        tour_type = self.request.query_params.get('type', None)
+        agency_name = self.request.query_params.get('agency', None)
+
+        # Start with all tours
+        queryset = Tour.objects.all()
+
+        # Filter by tour type if provided
+        if tour_type:
+            queryset = queryset.filter(type=tour_type)
+
+        # Filter by agency name if provided
+        if agency_name:
+            queryset = queryset.filter(agency__name=agency_name)
+
+        # Order the tours, you can customize this based on your needs
+        queryset = queryset.order_by('name')  # Sorting by tour name for example
+
+        return queryset
     
 class AddTour(APIView):
     def post(self, request):
