@@ -35,7 +35,7 @@ class SubmitTourDetailsView(APIView):
                 {
                     'type': 'send_tour_details',
                     'tour_data': tour_data,
-                    
+                    'tourist':user.id
                 },
             )
         

@@ -1,9 +1,9 @@
+from django.urls import path
+from .views import GetTravelAgencies, AddTravelAgency, GetTours, AddTour
 
-from rest_framework.routers import DefaultRouter
-from .views import TravelAgencyViewSet, TourViewSet
-
-router = DefaultRouter()
-router.register(r'agencies', TravelAgencyViewSet)
-router.register(r'tours', TourViewSet)
-
-urlpatterns = router.urls
+urlpatterns = [
+    path('agencies/', GetTravelAgencies.as_view()),
+    path('agencies/add/', AddTravelAgency.as_view()),
+    path('tours/', GetTours.as_view()),
+    path('tours/add/', AddTour.as_view()),
+]

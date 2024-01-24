@@ -1,13 +1,12 @@
-from rest_framework import serializers 
+from rest_framework import serializers
 from .models import TravelAgency, Tour
 
 class TravelAgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = TravelAgency
-        fields = ['name', 'address', 'contact_num', 'website']
+        fields = '__all__'
 
 class TourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tour
-        fields = ['title', 'description', 'price', 'duration_days', 'start_date', 'end_date', 'travelagency']
-        
+        fields = '__all__'
