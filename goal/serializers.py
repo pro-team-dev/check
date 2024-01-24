@@ -13,7 +13,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     profile = serializers.CharField(allow_blank=True, allow_null=True,required=False)
     username = serializers.CharField(max_length=200,validators=[UniqueValidator(queryset=User.objects.all())])
     citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True,required=False)
-    languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False)
+    languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False,default="['english']")
     phone_number = serializers.CharField(max_length=15, allow_blank=True, allow_null=True)
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True,required=False)
 
@@ -50,7 +50,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship','is_guide']
+        fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship','is_guide','phone_number','hourly_rate','ongoing_tour']
 
 class UserChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)

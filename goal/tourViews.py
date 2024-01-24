@@ -14,35 +14,36 @@ class SubmitTourDetailsView(APIView):
     permission_classes = [IsAuthenticated]
   
     def post(self, request, **kwargs):
-        if request.method == 'POST':
-            try:
-                user = request.user
-                if user.is_guide:
-                    return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
-                tour_data = json.loads(request.body.decode('utf-8'))
-                # Broadcast the tour details to connected guides via WebSocket
-                tour_id = Tour.save_tour_details(
-                    locations=tour_data['locations'],
-                    status='pending',  # You can set the initial status
-                    tourist=user
-                )
+        
+        try:
+            user = request.user
+            if not request.data.get("price"):
+                return Response({'status': 'error', 'message': 'Price is Required'}, status=status.HTTP_403_FORBIDDEN)
+            if user.is_guide:
+                return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
+            tour_data = request.data
+            tour_id = Tour.save_tour_details(
+                status='pending',  
+                tourist=user,
+                **tour_data
+            )
 
-                channel_layer = get_channel_layer()
-                tour_data["id"]=tour_id
-                async_to_sync(channel_layer.group_send)(
-                    f'guide_{tour_data["location"]}',  # Group name for guides
-                    {
-                        'type': 'send_tour_details',
-                        'tour_data': tour_data,
-                    },
-                )
-               
-                return Response({'status': 'success',
-                                 "tour_id":tour_id}, status=status.HTTP_200_OK)
-            except json.JSONDecodeError:
-                return Response({'status': 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'status': 'error', 'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            channel_layer = get_channel_layer()
+            tour_data["id"]=tour_id
+            async_to_sync(channel_layer.group_send)(
+                f'guide_{tour_data["location"]}',  # Group name for guides
+                {
+                    'type': 'send_tour_details',
+                    'tour_data': tour_data,
+                    
+                },
+            )
+        
+            return Response({'status': 'success',
+                            "tour_id":tour_id}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'status': 'error', 'message': f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+   
 
     
     
@@ -72,7 +73,6 @@ class AcceptTourOfferViewGuide(APIView):
                         'type': 'update',
                         'tour_data': {
                             'tour_id': tour.tour_id,
-                            'location': tour.location,
                             'time_duration':time_duation,
                             'price':price,
                             'tourist_id': tour.tourist.id,
