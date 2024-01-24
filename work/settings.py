@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'goal',
     'channels',
     "corsheaders",
+    'travelagency',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -193,3 +194,4 @@ SIMPLE_JWT = {
     }
 
 CSRF_TRUSTED_ORIGINS = ['https://api.localg.biz']
+CSRF_TRUSTED_ORIGINS = [ "http://localhost:8000"]
