@@ -48,6 +48,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
         fields = ['email', 'password']
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    languages = serializers.ListField(child=serializers.CharField(max_length=50), required=False, allow_null=True)
     class Meta:
         model = User
         fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship','is_guide','phone_number','hourly_rate','ongoing_tour','languages']
