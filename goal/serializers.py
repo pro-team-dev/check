@@ -10,12 +10,12 @@ from rest_framework.validators import UniqueValidator
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={'input_type':'password'}, write_only=True)
     is_guide = serializers.BooleanField(default=False, write_only=True)
-    profile = serializers.CharField(allow_blank=True, allow_null=True)
+    profile = serializers.CharField(allow_blank=True, allow_null=True,required=False)
     username = serializers.CharField(max_length=200,validators=[UniqueValidator(queryset=User.objects.all())])
-    citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True)
+    citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True,required=False)
     languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False)
     phone_number = serializers.CharField(max_length=15, allow_blank=True, allow_null=True)
-    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True,required=False)
 
     class Meta:
         model = User

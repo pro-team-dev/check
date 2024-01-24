@@ -37,7 +37,8 @@ class UserLoginView(APIView):
 
         if user is not None:
             token = get_tokens_for_user(user)
-            return Response({'token': token, 'msg': 'Login Success'}, status=status.HTTP_200_OK)
+            user_type="guide" if user.is_guide == True else "tourist"
+            return Response({'token': token, 'msg': 'Login Success','user_type':user_type}, status=status.HTTP_200_OK)
         else:
             return Response({'errors': {'non_field_errors': ['Email or Password is not valid']}}, status=status.HTTP_404_NOT_FOUND)
 
