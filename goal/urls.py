@@ -1,6 +1,6 @@
 from django.urls import path
 from goal.views import SendPasswordResetEmailView, UserChangePasswordView, UserLoginView, UserProfileView, UserRegistrationView, UserPasswordResetView
-from goal.tourViews import SubmitTourDetailsView,AcceptTourOfferViewGuide,AcceptTourOfferViewTourist,TourComplete,cancelTour
+from goal.tourViews import SubmitTourDetailsView,AcceptTourOfferViewGuide,AcceptTourOfferViewTourist,TourComplete,cancelTour,GetAllOffers,PendingTourUserView
 from goal.webSock.findGuide import GuideRequestConsumer,TouristConnection,GuideConnection
 from goal.webSock.utils import UsernameCheckConsumer
 
@@ -17,7 +17,8 @@ urlpatterns = [
     path('accept-tour-tourist/', AcceptTourOfferViewTourist.as_view(), name='tourist-accept-offer'),
     path('complete-tour/', TourComplete.as_view(), name='TourComplete'),
     path('cancel-tour/', cancelTour.as_view(), name='cancelTour'),
-
+    path('get-all-offers/', GetAllOffers.as_view(), name='get_all_offers'),
+    path('pending-tours/', PendingTourUserView.as_view(), name='pending_tour_user_list'),
 
 ]
 

@@ -1,12 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from goal.serializers import UserRegistrationSerializer
+from goal.serializers import UserRegistrationSerializer,OfferSerializer,TourSerializer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync,sync_to_async
 import json
 from rest_framework.permissions import IsAuthenticated
-from goal.models import Tour,User
+from goal.models import Tour,User,Offer
 from django.shortcuts import get_object_or_404
 from datetime import timedelta
 
@@ -66,6 +66,14 @@ class AcceptTourOfferViewGuide(APIView):
             # Assuming you have a tour ID in the request data
             time_duation= request.data.get('time_duration')
             # Update the status of the tour to 'ongoing' when accepted
+            offer = Offer.objects.create(
+                tour=tour,
+                guide=user,
+                tourist=tour.tourist,
+                price=price,
+                duration=time_duation
+            )
+            offer.save()
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                     f'tour_{tour.tourist}',  # Group name for guides
@@ -73,14 +81,16 @@ class AcceptTourOfferViewGuide(APIView):
                         'type': 'update',
                         'tour_data': {
                             'tour_id': tour.tour_id,
-                            'time_duration':time_duation,
-                            'price':price,
-                            'tourist_id': tour.tourist.id,
-                            'guide_id': user.id
+                            'offer_id':offer.id,
+                            'guide_id': offer.guide.id,
+                            'price': str(offer.price), 
+                            'duration':time_duation
                         },
                     },
                 )
-
+            tour.offer.add(offer)
+            print("ggggggggggggggggggggggggggg",user.tours)
+            user.tours.add(tour)
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except Tour.DoesNotExist:
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -92,6 +102,7 @@ class AcceptTourOfferViewTourist(APIView):
     def post(self, request):
         try:
             user = request.user
+            Offer_id=request.data.get("offer_id")
             tour_id = request.data.get('tour_id')
             tour = Tour.objects.get(tour_id=tour_id)
             tour.price=request.data.get('price')
@@ -218,3 +229,35 @@ class cancelTour(APIView):
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class GetAllOffers(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            tour_id = request.data.get("tour_id")
+            tour = get_object_or_404(Tour, tour_id=tour_id)
+            
+
+            offers = tour.offers.all()
+            serializer = OfferSerializer(offers, many=True)
+
+            return Response({'status': 'success', 'offers': serializer.data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+class PendingTourUserView(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        pending_tours = Tour.objects.filter(tourist=user, status="pending")
+        serializer = TourSerializer(pending_tours, many=True)
+        return Response({'status': 'success', 'pending_tours': serializer.data}, status=status.HTTP_200_OK)
+
+
+            
+
+        

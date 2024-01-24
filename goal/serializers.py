@@ -1,11 +1,13 @@
 from rest_framework import serializers
-from goal.models import User
+from goal.models import User,Offer
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from goal.utils import Util
-from .models import User
+from .models import User, Tour
 from rest_framework.validators import UniqueValidator
+
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={'input_type':'password'}, write_only=True)
@@ -107,3 +109,15 @@ class UserPasswordResetSerializer(serializers.Serializer):
             return attrs
         except (DjangoUnicodeDecodeError, User.DoesNotExist):
             raise serializers.ValidationError('Token is not Valid or Expired')
+        
+
+
+class OfferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ['id', 'tour', 'guide', 'tourist', 'price', 'duration']
+
+class TourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tour
+        fields = '__all__'

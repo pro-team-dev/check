@@ -44,6 +44,7 @@ class User(AbstractBaseUser):
         null=True,
         blank=True
     )
+    tours = models.ManyToManyField('Tour', related_name='tours', blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'username']
 
@@ -98,7 +99,8 @@ class Tour(models.Model):
     personal_request = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    offer = models.ManyToManyField('Offer', related_name='tour_offers')
+    
     @classmethod
     def save_tour_details(cls, locations,location, status, tourist, price=None, duration=None, no_of_people=None, travel_coverage=False, food_coverage=False, personal_request=None):
         tour = cls.objects.create(
@@ -118,3 +120,14 @@ class Tour(models.Model):
 
     def __str__(self):
         return f"Tour {self.tour_id} - {self.locations}"
+    
+class Offer(models.Model):
+    id = models.AutoField(primary_key=True)
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='offers')
+    guide = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_offers')
+    tourist = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_offers')
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    duration = models.DurationField(null=True)
+
+    def __str__(self):
+        return f"Offer {self.id} - Tour {self.tour_id} - Guide {self.guide_id} - Tourist {self.tourist_id}"
