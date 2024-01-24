@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from goal.models import Tour,User
 from django.shortcuts import get_object_or_404
 from datetime import timedelta
-#hehe
+
 class SubmitTourDetailsView(APIView):
     permission_classes = [IsAuthenticated]
   
