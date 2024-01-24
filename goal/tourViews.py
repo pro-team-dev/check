@@ -252,6 +252,8 @@ class GetAllOffers(APIView):
 
 
 class PendingTourUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
         user = request.user
         pending_tours = Tour.objects.filter(tourist=user, status="pending")
@@ -259,6 +261,12 @@ class PendingTourUserView(APIView):
         return Response({'status': 'success', 'pending_tours': serializer.data}, status=status.HTTP_200_OK)
 
 
-            
+class TourDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, tour_id, *args, **kwargs):
+        tour = get_object_or_404(Tour, tour_id=tour_id)
+        serializer = TourSerializer(tour)
+        return Response({'status': 'success', 'tour': serializer.data}, status=status.HTTP_200_OK)
 
         
