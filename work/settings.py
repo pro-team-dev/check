@@ -193,5 +193,5 @@ SIMPLE_JWT = {
     
     }
 
-CSRF_TRUSTED_ORIGINS = ['https://api.localg.biz',http://localhost:8000]
+CSRF_TRUSTED_ORIGINS = ['https://api.localg.biz','http://localhost:8000']
 
