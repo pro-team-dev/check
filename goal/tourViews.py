@@ -22,7 +22,7 @@ class SubmitTourDetailsView(APIView):
                 tour_data = json.loads(request.body.decode('utf-8'))
                 # Broadcast the tour details to connected guides via WebSocket
                 tour_id = Tour.save_tour_details(
-                    location=tour_data['location'],
+                    locations=tour_data['locations'],
                     status='pending',  # You can set the initial status
                     tourist=user
                 )

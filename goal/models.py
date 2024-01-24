@@ -85,7 +85,7 @@ class Tour(models.Model):
     ]
 
     tour_id = models.AutoField(primary_key=True)
-    location = models.CharField(max_length=255)
+    locations = models.JSONField(null=True)
     status = models.CharField(max_length=20, choices=TOUR_STATUS_CHOICES, default='pending')
     tourist = models.ForeignKey(User, on_delete=models.CASCADE, related_name='booked_tours')
     guide = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guided_tours', null=True)
@@ -95,9 +95,9 @@ class Tour(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
-    def save_tour_details(cls, location, status, tourist, price=None, duration=None):
+    def save_tour_details(cls, locations, status, tourist, price=None, duration=None):
         tour = cls.objects.create(
-            location=location,
+            locations=locations,
             status=status,
             tourist=tourist,
             price=price,

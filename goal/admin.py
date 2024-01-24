@@ -27,7 +27,7 @@ admin.site.register(User, CustomUserModelAdmin)
 # Register the Tour model
 @admin.register(Tour)
 class TourAdmin(admin.ModelAdmin):
-    list_display = ('tour_id', 'location', 'status', 'tourist', 'guide', 'created_at', 'updated_at')
+    list_display = ('tour_id','locations', 'status', 'tourist', 'guide', 'price', 'duration', 'created_at', 'updated_at')
     list_filter = ('status',)
     search_fields = ('location',)
     ordering = ('-created_at',)
