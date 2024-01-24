@@ -53,16 +53,17 @@ class AcceptTourOfferViewGuide(APIView):
             user = request.user
             tour_id = request.data.get('tour_id')
             tour = Tour.objects.get(tour_id=tour_id)
+            price=request.data.get('price')
 
             if not user.is_guide:
                 return Response({'status': 'error', 'message': 'Only guides can submit tour details.'}, status=status.HTTP_403_FORBIDDEN)
 
             if tour.status.lower() != "pending":
                 return Response({'status': 'error', 'message': 'Tour details can only be submitted for pending tours.'}, status=status.HTTP_403_FORBIDDEN)
-            
+            if not price:
+                return Response({'status': 'error', 'message': 'Invalid price'}, status=status.HTTP_400_BAD_REQUEST)
             # Assuming you have a tour ID in the request data
             time_duation= request.data.get('time_duration')
-            price=request.data.get('price')
             # Update the status of the tour to 'ongoing' when accepted
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
@@ -93,6 +94,11 @@ class AcceptTourOfferViewTourist(APIView):
             user = request.user
             tour_id = request.data.get('tour_id')
             tour = Tour.objects.get(tour_id=tour_id)
+            tour.price=request.data.get('price')
+            tour.duration=timedelta(hours=int(request.data.get('duration')))
+            if not tour.price or not tour.duration:
+                return Response({'status': 'error', 'message': 'Price and duration are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
             if user.is_guide:
                 return Response({'status': 'error', 'message': 'Guides cannot submit tour details.'}, status=status.HTTP_403_FORBIDDEN)
         
@@ -103,8 +109,6 @@ class AcceptTourOfferViewTourist(APIView):
             # Update the status of the tour to 'ongoing' when accepted
            
             tour.guide=get_object_or_404(User,id=fixed_guide_id)
-            tour.price=request.data.get('price')
-            tour.duration=timedelta(hours=int(request.data.get('duration')))
             tour.status = 'ongoing'
             tour.save()
             channel_name=f'tour_{fixed_guide_id}'
