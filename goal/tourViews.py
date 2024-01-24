@@ -108,11 +108,15 @@ class AcceptTourOfferViewTourist(APIView):
             fixed_guide_id=request.data.get('guide_id')
             # Update the status of the tour to 'ongoing' when accepted
            
-            tour.guide=get_object_or_404(User,id=fixed_guide_id)
+            guide=get_object_or_404(User,id=fixed_guide_id)
+            tour.guide=guide
             tour.status = 'ongoing'
             tour.save()
+            guide.ongoing_tour=tour
+            user.ongoing_tour=tour
+            guide.save()
+            user.save()
             channel_name=f'tour_{fixed_guide_id}'
-            print(channel_name)
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                     channel_name,  # Group name for guides
@@ -127,7 +131,7 @@ class AcceptTourOfferViewTourist(APIView):
                         },
                     },
                 )
-
+            
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except Tour.DoesNotExist:
             return Response({'status': 'error', 'message': 'Tour not found'}, status=status.HTTP_404_NOT_FOUND)

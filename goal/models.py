@@ -37,7 +37,13 @@ class User(AbstractBaseUser):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     objects = CustomUserManager()
-
+    ongoing_tour = models.ForeignKey(
+        'Tour',
+        on_delete=models.SET_NULL,
+        related_name='ongoing_tours',
+        null=True,
+        blank=True
+    )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'username']
 
