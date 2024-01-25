@@ -15,7 +15,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     profile = serializers.CharField(allow_blank=True, allow_null=True,required=False)
     username = serializers.CharField(max_length=200,validators=[UniqueValidator(queryset=User.objects.all())])
     citizenship = serializers.CharField(max_length=200, allow_blank=True, allow_null=True,required=False)
-    languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False,default="['english']")
+    languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False,default="English")
     phone_number = serializers.CharField(max_length=15, allow_blank=True, allow_null=True)
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True,required=False)
     location = serializers.CharField(max_length=15, allow_blank=True, allow_null=True,required=False)

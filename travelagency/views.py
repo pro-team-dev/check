@@ -19,11 +19,12 @@ class AddTravelAgency(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetTours(APIView):
+    serializer_class = TourSerializer
+
     def get(self, request):
-        tours = Tour.objects.all()
+        tours = self.get_queryset()
         serializer = TourSerializer(tours, many=True)
         return Response(serializer.data)
-    serializer_class = TourSerializer
 
     def get_queryset(self):
         # Retrieve the type of tour and agency name from the query parameters
@@ -35,17 +36,17 @@ class GetTours(APIView):
 
         # Filter by tour type if provided
         if tour_type:
-            queryset = queryset.filter(type=tour_type)
+            queryset = queryset.filter(tour_type=tour_type)  # Corrected this line
 
         # Filter by agency name if provided
         if agency_name:
-            queryset = queryset.filter(agency__name=agency_name)
+            queryset = queryset.filter(travelagency__name=agency_name)
 
         # Order the tours, you can customize this based on your needs
-        queryset = queryset.order_by('name')  # Sorting by tour name for example
+        queryset = queryset.order_by('title')  # Corrected this line to use 'title'
 
         return queryset
-    
+
 class AddTour(APIView):
     def post(self, request):
         serializer = TourSerializer(data=request.data)
