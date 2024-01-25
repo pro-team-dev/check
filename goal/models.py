@@ -32,10 +32,11 @@ class User(AbstractBaseUser):
     is_guide = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    phone_number = models.CharField(max_length=30, null=True, blank=True)
     languages_json = models.TextField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    location = models.TextField(null=True, blank=True)
     objects = CustomUserManager()
     ongoing_tour = models.ForeignKey(
         'Tour',
@@ -75,6 +76,15 @@ class User(AbstractBaseUser):
 
     def get_base64_profile_image(self):
         return self.profile
+    
+    @classmethod
+    def get_available_guides(cls, language=None, location=None):
+        # Get all users with is_guide=True
+        guides = cls.objects.filter(is_guide=True,location=location.lower(),ongoing_tour__isnull=True)
+
+        guide_ids = list(guides.values_list('id', flat=True))
+
+        return guide_ids
     
     
 class Tour(models.Model):

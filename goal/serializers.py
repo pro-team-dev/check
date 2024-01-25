@@ -18,10 +18,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     languages = serializers.ListField(child=serializers.CharField(max_length=50), allow_null=True, allow_empty=True,required=False,default="['english']")
     phone_number = serializers.CharField(max_length=15, allow_blank=True, allow_null=True)
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True,required=False)
+    location = serializers.CharField(max_length=15, allow_blank=True, allow_null=True,required=False)
+
 
     class Meta:
         model = User
-        fields = ['email', 'name', 'password', 'is_guide', 'profile', 'username', 'citizenship', 'languages', 'phone_number', 'hourly_rate']
+        fields = ['email', 'name', 'password', 'is_guide', 'profile', 'username', 'citizenship', 'languages', 'phone_number', 'hourly_rate','location']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -32,8 +34,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         languages = validated_data.pop('languages', [])
         phone_number = validated_data.pop('phone_number', '')
         hourly_rate = validated_data.pop('hourly_rate', None)
+        location=validated_data.pop('location',None)
 
-        user = User.objects.create_user(**validated_data, is_guide=is_guide, profile=profile, username=username, citizenship=citizenship)
+        user = User.objects.create_user(**validated_data, is_guide=is_guide, profile=profile, username=username, citizenship=citizenship,location=location)
         user.languages = languages
         user.phone_number = phone_number
         user.hourly_rate = hourly_rate
@@ -53,7 +56,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     languages = serializers.ListField(child=serializers.CharField(max_length=50), required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship','is_guide','phone_number','hourly_rate','ongoing_tour','languages']
+        fields = ['id', 'email', 'name', 'profile', 'username', 'citizenship','is_guide','phone_number','hourly_rate','ongoing_tour','languages','location']
 
 class UserChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)

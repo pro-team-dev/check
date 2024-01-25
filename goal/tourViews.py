@@ -22,23 +22,28 @@ class SubmitTourDetailsView(APIView):
             if user.is_guide:
                 return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
             tour_data = request.data
+            guides=user.get_available_guides(location=tour_data["location"],language=tour_data["language"])
+            tour_data.pop("language")
             tour_id = Tour.save_tour_details(
                 status='pending',  
                 tourist=user,
                 **tour_data
             )
-
+            
             channel_layer = get_channel_layer()
             tour_data["id"]=tour_id
-            async_to_sync(channel_layer.group_send)(
-                f'guide_{tour_data["location"]}',  # Group name for guides
-                {
-                    'type': 'send_tour_details',
-                    'tour_data': tour_data,
-                    'tourist':user.id
-                },
-            )
-        
+            for guide in guides:
+                async_to_sync(channel_layer.group_send)(
+                    f'tour_{guide}',  # Group name for guides
+                    {
+                        'type': 'new_tour',
+                        'tour_data': tour_data,
+                        'tourist':user.id
+                    },
+                )
+                guide=User.objects.get(id=guide)
+                guide.tours.add(tour_id)
+                user.tours.add(tour_id)
             return Response({'status': 'success',
                             "tour_id":tour_id}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -89,7 +94,6 @@ class AcceptTourOfferViewGuide(APIView):
                     },
                 )
             tour.offer.add(offer)
-            print("ggggggggggggggggggggggggggg",user.tours)
             user.tours.add(tour)
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except Tour.DoesNotExist:
@@ -256,9 +260,31 @@ class PendingTourUserView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        pending_tours = Tour.objects.filter(tourist=user, status="pending")
-        serializer = TourSerializer(pending_tours, many=True)
-        return Response({'status': 'success', 'pending_tours': serializer.data}, status=status.HTTP_200_OK)
+        tours = user.tours.filter(status="pending")
+        serializer = TourSerializer(tours, many=True)
+        if user.is_guide == False:
+            return Response({'status': 'success', 'pending_tours': serializer.data}, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+                'accepted': [],
+                'not-accepted': []
+            }
+            for tour_data in serializer.data:
+                print(tour_data['tour_id'],"\n\n\n")
+                tour = Tour.objects.get(tour_id=tour_data['tour_id'])
+                offers = tour.offers.all()  
+                print(offers)
+                if offers:
+                    for offer in offers:
+                        if offer.guide == user:
+                            response_data['accepted'].append(tour_data)
+                else:
+                    response_data['not-accepted'].append(tour_data)
+
+            return Response({'status': 'success', 'pending_tours': response_data}, status=status.HTTP_200_OK)
+
+    
+
 
 
 class TourDetailView(APIView):
