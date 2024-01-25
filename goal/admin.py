@@ -4,7 +4,7 @@ from goal.models import User, Tour
 
 # Custom User Model Admin
 class CustomUserModelAdmin(BaseUserAdmin):
-    list_display = ('id', 'email', 'name','is_guide', 'citizenship', 'languages', 'phone_number', 'hourly_rate')
+    list_display = ('id', 'email', 'name','is_guide', 'citizenship', 'languages', 'phone_number', 'hourly_rate','location','ongoing_tour')
     list_filter = ('is_admin',)
     fieldsets = (
         ('User Credentials', {'fields': ('email', 'password')}),

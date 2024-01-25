@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from goal.models import User
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -83,3 +84,11 @@ class UserPasswordResetView(APIView):
         serializer = UserPasswordResetSerializer(data=request.data, context={'uid': uid, 'token': token})
         serializer.is_valid(raise_exception=True)
         return Response({'msg': 'Password Reset Successfully'}, status=status.HTTP_200_OK)
+
+class UserProfileViewFromID(APIView):
+    renderer_classes = [UserRenderer]
+
+    def get(self, request,id):
+        user=User.objects.get(id=id)
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

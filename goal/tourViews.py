@@ -32,6 +32,7 @@ class SubmitTourDetailsView(APIView):
             
             channel_layer = get_channel_layer()
             tour_data["id"]=tour_id
+            user.tours.add(tour_id)
             for guide in guides:
                 async_to_sync(channel_layer.group_send)(
                     f'tour_{guide}',  # Group name for guides
@@ -43,7 +44,8 @@ class SubmitTourDetailsView(APIView):
                 )
                 guide=User.objects.get(id=guide)
                 guide.tours.add(tour_id)
-                user.tours.add(tour_id)
+                
+
             return Response({'status': 'success',
                             "tour_id":tour_id}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -186,6 +188,16 @@ class TourComplete(APIView):
                         },
                     },
                 )
+            user.ongoing_tour= None
+            user.save()
+            if str(tour.guide)==str(user):
+                to=tour.tourist  
+                to.ongoing_tour = None
+                to.save()
+            else:
+                to=tour.guide
+                to.ongoing_tour = None
+                to.save()
 
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except Tour.DoesNotExist:
@@ -201,13 +213,20 @@ class cancelTour(APIView):
             user = request.user
             tour_id = request.data.get('tour_id')
             tour = Tour.objects.get(tour_id=tour_id)
-            if tour.guide == user or tour.tourist == user:
+             
+            if str(tour.guide) == str(user.id) or str(tour.tourist) == str(user.id) and tour.status!="cancelled" and tour.status!="completed":
                 tour.status = 'cancelled'
                 tour.save()
-                if tour.guide==user:
+                user.ongoing_tour= None
+                user.save()
+                if str(tour.guide)==str(user):
                     to=tour.tourist  
+                    to.ongoing_tour = None
+                    to.save()
                 else:
                     to=tour.guide
+                    to.ongoing_tour = None
+                    to.save()
                 channel_layer = get_channel_layer()
                 async_to_sync(channel_layer.group_send)(
                         f'tour_{to}',  # Group name for guides
@@ -217,16 +236,17 @@ class cancelTour(APIView):
                                 'tour_id': tour.tour_id,
                                 'location': tour.location,
                                 'status': tour.status,
-                                'tourist_id': tour.tourist.id,
-                                'guide_id': tour.guide.id,
+                                'tourist_id': tour.tourist,
+                                'guide_id': tour.guide,
                                 
                             },
                         },
                     )
 
+
                 return Response({'status': 'success'}, status=status.HTTP_200_OK)
             else:
-                 return Response({'status': 'error', 'message': 'No tour found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'status': 'error', 'message': 'No tourr found'}, status=status.HTTP_404_NOT_FOUND)
 
             
         except Tour.DoesNotExist:
@@ -294,5 +314,14 @@ class TourDetailView(APIView):
         tour = get_object_or_404(Tour, tour_id=tour_id)
         serializer = TourSerializer(tour)
         return Response({'status': 'success', 'tour': serializer.data}, status=status.HTTP_200_OK)
+
+class ongoingTour(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request,):
+        user=request.user
+        serializer=TourSerializer(user.ongoing_tour)
+        return Response({'status': 'success', 'tour': serializer.data}, status=status.HTTP_200_OK)
+        
 
         
