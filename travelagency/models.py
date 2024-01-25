@@ -1,5 +1,6 @@
 import base64
 from django.db import models
+from django.core.files.base import ContentFile
 
 class TravelAgency(models.Model):
     id = models.AutoField(primary_key=True)
@@ -51,17 +52,6 @@ class Gallery(models.Model):
         return f'Gallery {self.id}'
 
     def save(self, *args, **kwargs):
-        # If image is not already a base64 string, encode it
-        if self.image and not self.image.startswith('data:'):
-            with open(self.image, 'rb') as image_file:
-                self.image = 'data:image/png;base64,' + base64.b64encode(image_file.read()).decode('utf-8')
-
-        # If image is a base64 string, create ContentFile
-        if isinstance(self.image, str):
-            format, imgstr = self.image.split(';base64,')  # assuming 'data:image/png;base64,'
-            ext = format.split('/')[-1]  # assuming 'image/png'
-            self.image = ContentFile(base64.b64decode(imgstr), name=f'gallery_image.{ext}')
-
         # Ensure that the image attribute is set before saving
         if not self.image:
             raise ValueError("Image attribute cannot be None")

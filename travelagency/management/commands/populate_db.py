@@ -2,6 +2,7 @@ import os
 import random
 import datetime
 import base64
+import uuid
 from django.core.management.base import BaseCommand
 from travelagency.models import TravelAgency, Tour, Gallery
 from PIL import Image
@@ -43,16 +44,19 @@ class Command(BaseCommand):
                 compressed_image = self.compress_image(temp_folder, random.choice(os.listdir(temp_folder)))
                 if compressed_image is not None:
                     gallery = Gallery.objects.create(image=compressed_image)
-                    tour.gallery.add(gallery)  # Add the gallery to the tour's many-to-many field
-                    tour.save()  # Save the tour to persist the many-to-many relationship
+                    tour.gallery.add(gallery)
 
         self.stdout.write(self.style.SUCCESS('Database populated successfully!'))
 
     def get_base64_encoded_image(self, folder, image_filename):
         image_path = os.path.join(folder, image_filename)
-        with open(image_path, 'rb') as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-        return encoded_image
+        if os.path.exists(image_path):
+            with open(image_path, 'rb') as image_file:
+                encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+            return encoded_image
+        else:
+            print(f"Image file not found: {image_path}")
+            return None
 
     def compress_image(self, folder, image_filename):
         image_path = os.path.join(folder, image_filename)
@@ -60,8 +64,11 @@ class Command(BaseCommand):
         try:
             # Open and compress the image using Pillow
             with Image.open(image_path) as img:
-                compressed_image_path = os.path.join(folder, f'compressed_{image_filename}')
-                img.save(compressed_image_path, quality=20)  # Adjust the quality as needed
+                # Create a unique and short name for the compressed image
+                compressed_image_name = f'{uuid.uuid4().hex[:12]}.jpg'
+                compressed_image_path = os.path.join(folder, compressed_image_name)
+
+                img.save(compressed_image_path, format='JPEG', quality=20)  # Adjust the quality as needed
 
                 # Read the compressed image and return base64 encoding
                 with open(compressed_image_path, 'rb') as compressed_image_file:
