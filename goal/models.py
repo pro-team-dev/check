@@ -113,6 +113,8 @@ class Tour(models.Model):
     
     @classmethod
     def save_tour_details(cls, locations,location, status, tourist, price=None, duration=None, no_of_people=None, travel_coverage=False, food_coverage=False, personal_request=None):
+        
+        console.log(duration)
         tour = cls.objects.create(
             locations=locations,
             location=location,

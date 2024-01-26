@@ -21,6 +21,9 @@ class SubmitTourDetailsView(APIView):
                 return Response({'status': 'error', 'message': 'Price is Required'}, status=status.HTTP_403_FORBIDDEN)
             if user.is_guide:
                 return Response({'status': 'error', 'message': 'Only tourists can submit tour details'}, status=status.HTTP_403_FORBIDDEN)
+            if user.ongoing_tour != None:
+                return Response({'status': 'error', 'message': 'Already Ongoing Project'}, status=status.HTTP_403_FORBIDDEN)
+
             tour_data = request.data
             guides=user.get_available_guides(location=tour_data["location"],language=tour_data["language"])
             tour_data.pop("language")
@@ -71,14 +74,15 @@ class AcceptTourOfferViewGuide(APIView):
             if not price:
                 return Response({'status': 'error', 'message': 'Invalid price'}, status=status.HTTP_400_BAD_REQUEST)
             # Assuming you have a tour ID in the request data
-            time_duation= request.data.get('time_duration')
+            duration=timedelta(hours=int(request.data.get('duration')))
+
             # Update the status of the tour to 'ongoing' when accepted
             offer = Offer.objects.create(
                 tour=tour,
                 guide=user,
                 tourist=tour.tourist,
                 price=price,
-                duration=time_duation
+                duration=duration
             )
             offer.save()
             channel_layer = get_channel_layer()
@@ -91,7 +95,7 @@ class AcceptTourOfferViewGuide(APIView):
                             'offer_id':offer.id,
                             'guide_id': offer.guide.id,
                             'price': str(offer.price), 
-                            'duration':time_duation
+                            'duration':duration
                         },
                     },
                 )

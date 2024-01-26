@@ -11,6 +11,10 @@ class Command(BaseCommand):
     help = 'Populate the database with sample data'
 
     def handle(self, *args, **options):
+        
+        Gallery.objects.all().delete()
+        Tour.objects.all().delete()
+        TravelAgency.objects.all().delete()
         # Assuming the temp folder is in the same directory as populate_db.py
         temp_folder = os.path.join(os.path.dirname(__file__), '..', 'temp')
 
